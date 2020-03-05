@@ -24,9 +24,10 @@ class NetMusicSpider(object):
                        charset=charset)
         #游标
         cur = conn.cursor()
-        print("start to write to database")
+        print("start to write to database.......")
         for item in self.sqlData:
             cur.execute(sql, item)
+            print(item)
 
         conn.commit()
         # 关闭游标　
@@ -44,13 +45,21 @@ class NetMusicSpider(object):
         li = soup.find('ul', class_="f-hide")
         text = soup.find("textarea")
         res = json.loads(text.string)
+        print("start to get hot music......")
         for item in res:
-            music_id = item['artists'][0]['id']
+            music_id = item['id']
             source_path = "http://music.163.com/song/media/outer/url?id=" + str(item["id"]) + ".mp3"
-            music_name = item['album']['name']
+            music_name = item['name']
             artist_name = item['artists'][0]['name']
+            artist_id = item['artists'][0]['id']
             pic_url = item['album']['picUrl']
-            self.sqlData.append([music_name, music_id, artist_name, pic_url, source_path])
+            timeStamp =item['duration']
+            min=int(timeStamp/1000/60)
+            second=int(timeStamp/1000%60)
+            music_length="0"+str(min)+":"+str(second)
+            print(music_length)
+            self.sqlData.append([music_id,music_name,music_length,artist_id, artist_name, pic_url, source_path])
+            print([music_id,music_name,music_length,artist_id, artist_name, pic_url, source_path])
         print("fetch all music success")
 
     def getHotArtist(self, type):
@@ -64,7 +73,7 @@ class NetMusicSpider(object):
             url = self.japan
         elif (type == 'korea'):
             url = self.korea
-        print("start to get hot artist ")
+        print("start to get hot artist...... ")
         for i in range(1, 4):
             req = self.session.get(url + str(i), headers=self.headers)
             soup = BeautifulSoup(req.text, "lxml")
@@ -77,6 +86,7 @@ class NetMusicSpider(object):
                 artist_id = str(a['href']).split("=")[1]
                 artist_name = a['title'][:-3]
                 self.sqlData.append([artist_id, artist_name, src])
+                print([artist_id, artist_name, src])
             # 列表歌手，需要进入主页找封面
             for item in artistDetail:
                 a = item.find('a', class_="nm nm-icn f-thide s-fc0")
@@ -88,10 +98,11 @@ class NetMusicSpider(object):
                 script = json.loads(home_soup.find("script", type="application/ld+json").string)
                 src = script['images'][0]
                 self.sqlData.append([artist_id, artist_name, src])
+                print([artist_id, artist_name, src])
             print("fetch all artist success!")
 
 
 if __name__ == "__main__":
     NMS = NetMusicSpider()
-    NMS.getHotArtist("chinese")
-    #NMS.write_to_mysql("172.16.29.107","hive","NEU@pzj123456","music","INSERT INTO TB_SYS_ARTIST_INFO VALUES (%s,%s,%s)",3306,"utf8")
+    NMS.getHotMusic()
+    NMS.write_to_mysql("172.16.29.107","hive","NEU@pzj123456","music","INSERT INTO TB_SYS_MUSIC_INFO VALUES (%s,%s,%s,%s,%s,%s,%s)",3306,"utf8")
