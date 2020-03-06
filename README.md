@@ -2,10 +2,12 @@
 ## 安装包
 1. bs4
 2. pymysql
-## getHotMusic
+## get_hot_music
 获取热门音乐排行榜所有音乐
-## getHotArtist(type)
+## get_hot_artist(type)
 获取热门类型所有歌手
-type chinese japan korea europe
+
+type 
+chinese japan korea europe
 ## write_to_mysql
 写到数据库
